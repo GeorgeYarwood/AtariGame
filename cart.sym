@@ -7,11 +7,10 @@ AUDF0                    0017
 AUDF1                    0018                  
 AUDV0                    0019                  
 AUDV1                    001a                  
-CheckFire                f0a1                  
-CheckP0Down              f086              (R )
-CheckP0Left              f08f              (R )
-CheckP0Right             f098              (R )
-CheckP0Up                f07d                  
+canJump                  0084              (R )
+CheckFire                f097              (R )
+CheckP0Left              f085                  
+CheckP0Right             f08e              (R )
 COLUBK                   0009              (R )
 COLUP0                   0006              (R )
 COLUP1                   0007                  
@@ -26,12 +25,11 @@ CXM1P                    0001
 CXP0FB                   0002                  
 CXP1FB                   0003                  
 CXPPMM                   0007                  
-DivideLoop               f035              (R )
-eBitmap                  f0d7                  
-eCol                     f0df                  
+DivideLoop               f03d              (R )
 ENABL                    001f                  
-ENAM0                    001d              (R )
+ENAM0                    001d                  
 ENAM1                    001e                  
+Gravity                  f0d4                  
 GRP0                     001b              (R )
 GRP1                     001c                  
 HMBL                     0024                  
@@ -48,14 +46,17 @@ INPT3                    000b
 INPT4                    000c              (R )
 INPT5                    000d                  
 INTIM                    0284                  
-LoadPlayerBitmap         f05e              (R )
-missileXPos              0083              (R )
-NoInput                  f0b2              (R )
+JumpPlayer               f0a6              (R )
+LoadPlayerBitmap         f066              (R )
+maxHeight                0083              (R )
+missileXPos              0085                  
+NextFrame                f0e4              (R )
+NoInput                  f0d2              (R )
 NUSIZ0                   0004                  
 NUSIZ1                   0005                  
-Overscan                 f074              (R )
-pBitmap                  f0b5              (R )
-pCol                     f0c6              (R )
+Overscan                 f07c              (R )
+pBitmap                  f0e7              (R )
+pCol                     f107              (R )
 PF0                      000d                  
 PF1                      000e                  
 PF2                      000f                  
@@ -70,9 +71,8 @@ RESMP1                   0029
 RESP0                    0010              (R )
 RESP1                    0011                  
 RSYNC                    0003                  
-Scanline                 f054              (R )
-SpawnMissile             f0aa              (R )
-StartFrame               f01b              (R )
+Scanline                 f05c              (R )
+StartFrame               f023              (R )
 SWACNT                   0281                  
 SWBCNT                   0283                  
 SWCHA                    0280              (R )
@@ -86,16 +86,17 @@ TIM64T                   0296
 TIM8T                    0295                  
 TIMINT                   0285                  
 VBLANK                   0001              (R )
-VBlank                   f049              (R )
+VBlank                   f051              (R )
 VDELBL                   0027                  
 VDELP0                   0025                  
 VDELP1                   0026                  
 VERSION_MACRO            006a                  
 VERSION_VCS              0069                  
-VSync                    f023              (R )
 VSYNC                    0000              (R )
+VSync                    f02b              (R )
 WSYNC                    0002              (R )
 xPos                     0080              (R )
 yHeight                  0082              (R )
 yPos                     0081              (R )
+ZeroPos                  f0dd              (R )
 --- End of Symbol List.

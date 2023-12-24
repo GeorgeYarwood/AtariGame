@@ -384,18 +384,20 @@
     176  0000 ????						; EOF
 ------- FILE SimpleGame.asm
       5  0000 ????
-      6 U0084 ????				      SEG.U	Variables
+      6 U0086 ????				      SEG.U	Variables
       7 U0080					      ORG	$80
       8 U0080		       00	   xPos       byte.b
       9 U0081		       00	   yPos       byte.b
      10 U0082		       00	   yHeight    byte.b
-     11 U0083
-     12 U0083		       00	   missileXPos byte.b
-     13 U0084
-     14  10000 ????				       SEG	Code
-     15  f000					      ORG	$F000
-     16  f000
-     17  f000				   Reset
+     11 U0083		       00	   maxHeight  byte.b
+     12 U0084		       00	   canJump    byte.b
+     13 U0085
+     14 U0085		       00	   missileXPos byte.b
+     15 U0086
+     16  10000 ????				       SEG	Code
+     17  f000					      ORG	$F000
+     18  f000
+     19  f000				   Reset
       0  f000					      CLEAN_START
       1  f000		       78		      sei
       2  f001		       d8		      cld
@@ -408,211 +410,279 @@
       9  f008		       48		      pha
      10  f009		       d0 fb		      bne	.CLEAR_STACK
      11  f00b
-     19  f00b
-     20  f00b		       a2 7e		      ldx	#$7E
-     21  f00d		       86 09		      stx	COLUBK	;Bg col
-     22  f00f
-     23  f00f		       a2 d0		      ldx	#$D0	;Playfield col
-     24  f011		       86 08		      stx	COLUPF
-     25  f013
-     26  f013		       a9 0a		      lda	#10
-     27  f015		       85 80		      sta	xPos	;Init player start pos
-     28  f017
-     29  f017		       a9 11		      lda	#17	;Elements in the array
-     30  f019		       85 82		      sta	yHeight
-     31  f01b
-     32  f01b				   StartFrame
-     33  f01b		       a9 02		      lda	#2
-     34  f01d		       85 01		      sta	VBLANK
-     35  f01f		       85 00		      sta	VSYNC
-     36  f021
-     37  f021		       a2 04		      ldx	#4
-     38  f023				   VSync		;Three lines of VSYNC
-     39  f023		       ca		      dex
-     40  f024		       85 02		      sta	WSYNC
-     41  f026		       d0 fb		      bne	VSync
-     42  f028
-     43  f028		       a9 00		      lda	#0
-     44  f02a		       85 00		      sta	VSYNC	;Disable VSYNC
-     45  f02c
-     46  f02c							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-     47  f02c							;; Use VBLANK to set player horizontal pos
-     48  f02c							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-     49  f02c		       a5 80		      lda	xPos
-     50  f02e		       29 7f		      and	#$7F	;Restricts pos within -8-7 cutting off anything higher
-     51  f030		       85 02		      sta	WSYNC
-     52  f032		       85 2b		      sta	HMCLR
+     21  f00b
+     22  f00b		       a2 7e		      ldx	#$7E
+     23  f00d		       86 09		      stx	COLUBK	;Bg col
+     24  f00f
+     25  f00f		       a2 d0		      ldx	#$D0	;Playfield col
+     26  f011		       86 08		      stx	COLUPF
+     27  f013
+     28  f013		       a9 0a		      lda	#10
+     29  f015		       85 80		      sta	xPos	;Init player start pos
+     30  f017
+     31  f017		       a9 20		      lda	#32	;Elements in the array
+     32  f019		       85 82		      sta	yHeight
+     33  f01b
+     34  f01b		       a9 50		      lda	#80
+     35  f01d		       85 83		      sta	maxHeight
+     36  f01f
+     37  f01f		       a9 02		      lda	#2
+     38  f021		       85 84		      sta	canJump
+     39  f023
+     40  f023				   StartFrame
+     41  f023		       a9 02		      lda	#2
+     42  f025		       85 01		      sta	VBLANK
+     43  f027		       85 00		      sta	VSYNC
+     44  f029
+     45  f029		       a2 04		      ldx	#4
+     46  f02b				   VSync		;Three lines of VSYNC
+     47  f02b		       ca		      dex
+     48  f02c		       85 02		      sta	WSYNC
+     49  f02e		       d0 fb		      bne	VSync
+     50  f030
+     51  f030		       a9 00		      lda	#0
+     52  f032		       85 00		      sta	VSYNC	;Disable VSYNC
      53  f034
-     54  f034		       38		      sec		;Carry flag
-     55  f035				   DivideLoop
-     56  f035		       e9 0f		      sbc	#15	; subtract 15 from the accumulator
-     57  f037		       b0 fc		      bcs	DivideLoop	;While carry flag is set, loop
-     58  f039		       49 07		      eor	#7
-     59  f03b					      REPEAT	4	;Shift left 4 times for the TIA
-     60  f03b		       0a		      ASL
-     59  f03b					      REPEND
-     60  f03c		       0a		      ASL
-     59  f03c					      REPEND
-     60  f03d		       0a		      ASL
-     59  f03d					      REPEND
-     60  f03e		       0a		      ASL
-     61  f03f					      REPEND
-     62  f03f		       85 20		      sta	HMP0
-     63  f041		       85 10		      sta	RESP0
-     64  f043		       85 02		      sta	WSYNC
-     65  f045		       85 2a		      sta	HMOVE
-     66  f047
-     67  f047		       a2 24		      ldx	#36
-     68  f049				   VBlank		;Output remaining VBLANK
-     69  f049		       ca		      DEX
-     70  f04a		       85 02		      sta	WSYNC
-     71  f04c		       d0 fb		      bne	VBlank
-     72  f04e
-     73  f04e		       a9 00		      lda	#0
-     74  f050		       85 01		      sta	VBLANK
-     75  f052
-     76  f052							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-     77  f052							;; 242 (PAL) Visible scanlines
-     78  f052							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-     79  f052		       a6 f2		      ldx	242
-     80  f054
-     81  f054				   Scanline
-     82  f054		       8a		      txa
-     83  f055		       38		      SEC
-     84  f056		       e5 81		      sbc	yPos
-     85  f058		       c5 82		      cmp	yHeight
-     86  f05a		       90 02		      bcc	LoadPlayerBitmap
-     87  f05c
-     88  f05c		       a9 00		      lda	#0
-     89  f05e
-     90  f05e				   LoadPlayerBitmap
-     91  f05e		       a8		      tay
-     92  f05f		       b9 b5 f0 	      lda	pBitmap,Y	;A is our scanline, so iterate arr based on that
-     93  f062		       85 02		      sta	WSYNC
-     94  f064		       85 1b		      sta	GRP0	;Set p graphic address
-     95  f066		       b9 c6 f0 	      lda	pCol,Y	;Get col same as bitmap
-     96  f069		       85 06		      sta	COLUP0
-     97  f06b		       ca		      dex
-     98  f06c		       d0 e6		      bne	Scanline
-     99  f06e
-    100  f06e		       a9 02		      lda	#2
-    101  f070		       85 01		      sta	VBLANK
-    102  f072		       a6 1f		      ldx	31
-    103  f074
-    104  f074				   Overscan
-    105  f074		       ca		      dex
-    106  f075		       85 02		      sta	WSYNC
-    107  f077		       d0 fb		      bne	Overscan
-    108  f079
-    109  f079		       a9 00		      lda	#0
-    110  f07b		       85 01		      sta	VBLANK
-    111  f07d							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    112  f07d							;; Joystick input test for P0 up/down/left/right
-    113  f07d							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    114  f07d				   CheckP0Up
-    115  f07d		       a9 10		      lda	#%00010000
-    116  f07f		       2c 80 02 	      bit	SWCHA
-    117  f082		       d0 02		      bne	CheckP0Down
-    118  f084		       e6 81		      inc	yPos
-    119  f086
-    120  f086				   CheckP0Down
-    121  f086		       a9 20		      lda	#%00100000
-    122  f088		       2c 80 02 	      bit	SWCHA
-    123  f08b		       d0 02		      bne	CheckP0Left
-    124  f08d		       c6 81		      dec	yPos
-    125  f08f
-    126  f08f				   CheckP0Left
-    127  f08f		       a9 40		      lda	#%01000000
-    128  f091		       2c 80 02 	      bit	SWCHA
-    129  f094		       d0 02		      bne	CheckP0Right
-    130  f096		       c6 80		      dec	xPos
-    131  f098
-    132  f098				   CheckP0Right
-    133  f098		       a9 80		      lda	#%10000000
-    134  f09a		       2c 80 02 	      bit	SWCHA
-    135  f09d		       d0 13		      bne	NoInput
-    136  f09f		       e6 80		      inc	xPos
-    137  f0a1
-    138  f0a1				   CheckFire
-    139  f0a1		       a9 80		      lda	#%10000000
-    140  f0a3		       24 0c		      bit	INPT4
-    141  f0a5		       d0 0b		      bne	NoInput
-    142  f0a7		       4c aa f0 	      jmp	SpawnMissile
-    143  f0aa				   SpawnMissile
-    144  f0aa		       a9 02		      lda	#2
-    145  f0ac		       85 1d		      sta	ENAM0
-    146  f0ae		       a6 80		      ldx	xPos
-    147  f0b0		       86 83		      stx	missileXPos
-    148  f0b2				   NoInput
-    149  f0b2							; fallback when no input was performed
-    150  f0b2
-    151  f0b2
-    152  f0b2		       4c 1b f0 	      jmp	StartFrame
-    153  f0b5
-    154  f0b5				   pBitmap
-    155  f0b5		       7e		      byte.b	#%01111110
-    156  f0b6		       ff		      byte.b	#%11111111
-    157  f0b7		       36		      byte.b	#%00110110
-    158  f0b8		       36		      byte.b	#%00110110
-    159  f0b9		       34		      byte.b	#%00110100
-    160  f0ba		       34		      byte.b	#%00110100
-    161  f0bb		       3c		      byte.b	#%00111100
-    162  f0bc		       7d		      byte.b	#%01111101
-    163  f0bd		       7d		      byte.b	#%01111101
-    164  f0be		       7d		      byte.b	#%01111101
-    165  f0bf		       7d		      byte.b	#%01111101
-    166  f0c0		       7f		      byte.b	#%01111111
-    167  f0c1		       7e		      byte.b	#%01111110
-    168  f0c2		       10		      byte.b	#%00010000
-    169  f0c3		       1c		      byte.b	#%00011100
-    170  f0c4		       1c		      byte.b	#%00011100
-    171  f0c5		       1c		      byte.b	#%00011100
-    172  f0c6
-    173  f0c6							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    174  f0c6							;; Lookup table for the player colors
-    175  f0c6							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    176  f0c6				   pCol
-    177  f0c6		       00		      byte.b	#$00
-    178  f0c7		       f6		      byte.b	#$F6
-    179  f0c8		       f2		      byte.b	#$F2
-    180  f0c9		       f2		      byte.b	#$F2
-    181  f0ca		       f2		      byte.b	#$F2
-    182  f0cb		       f2		      byte.b	#$F2
-    183  f0cc		       f2		      byte.b	#$F2
-    184  f0cd		       c2		      byte.b	#$C2
-    185  f0ce		       c2		      byte.b	#$C2
-    186  f0cf		       c2		      byte.b	#$C2
-    187  f0d0		       c2		      byte.b	#$C2
-    188  f0d1		       c2		      byte.b	#$C2
-    189  f0d2		       c2		      byte.b	#$C2
-    190  f0d3		       3e		      byte.b	#$3E
-    191  f0d4		       3e		      byte.b	#$3E
-    192  f0d5		       3e		      byte.b	#$3E
-    193  f0d6		       24		      byte.b	#$24
-    194  f0d7
-    195  f0d7				   eBitmap
-    196  f0d7		       00		      byte.b	#%00000000
-    197  f0d8		       78		      byte.b	#%01111000
-    198  f0d9		       78		      byte.b	#%01111000
-    199  f0da		       78		      byte.b	#%01111000
-    200  f0db		       78		      byte.b	#%01111000
-    201  f0dc		       78		      byte.b	#%01111000
-    202  f0dd		       78		      byte.b	#%01111000
-    203  f0de		       30		      byte.b	#%00110000
-    204  f0df
-    205  f0df				   eCol
-    206  f0df		       4c		      byte.b	#$4C
-    207  f0e0		       4c		      byte.b	#$4C
-    208  f0e1		       4c		      byte.b	#$4C
-    209  f0e2		       4c		      byte.b	#$4C
-    210  f0e3		       4c		      byte.b	#$4C
-    211  f0e4		       4c		      byte.b	#$4C
-    212  f0e5		       4c		      byte.b	#$4C
-    213  f0e6		       00		      byte.b	#$00
-    214  f0e7
-    215  f0e7							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    216  f0e7							;; Complete ROM size
-    217  f0e7							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    218  fffc					      org	$FFFC
-    219  fffc		       00 f0		      word.w	Reset
-    220  fffe		       00 f0		      word.w	Reset
+     54  f034							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     55  f034							;; Use VBLANK to set player horizontal pos
+     56  f034							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     57  f034		       a5 80		      lda	xPos
+     58  f036		       29 7f		      and	#$7F	;Restricts pos within -8-7 cutting off anything higher
+     59  f038		       85 02		      sta	WSYNC
+     60  f03a		       85 2b		      sta	HMCLR
+     61  f03c
+     62  f03c		       38		      sec		;Carry flag
+     63  f03d				   DivideLoop
+     64  f03d		       e9 0f		      sbc	#15	; subtract 15 from the accumulator
+     65  f03f		       b0 fc		      bcs	DivideLoop	;While carry flag is set, loop
+     66  f041		       49 07		      eor	#7
+     67  f043					      REPEAT	4	;Shift left 4 times for the TIA
+     68  f043		       0a		      ASL
+     67  f043					      REPEND
+     68  f044		       0a		      ASL
+     67  f044					      REPEND
+     68  f045		       0a		      ASL
+     67  f045					      REPEND
+     68  f046		       0a		      ASL
+     69  f047					      REPEND
+     70  f047		       85 20		      sta	HMP0
+     71  f049		       85 10		      sta	RESP0
+     72  f04b		       85 02		      sta	WSYNC
+     73  f04d		       85 2a		      sta	HMOVE
+     74  f04f
+     75  f04f		       a2 24		      ldx	#36
+     76  f051				   VBlank		;Output remaining VBLANK
+     77  f051		       ca		      DEX
+     78  f052		       85 02		      sta	WSYNC
+     79  f054		       d0 fb		      bne	VBlank
+     80  f056
+     81  f056		       a9 00		      lda	#0
+     82  f058		       85 01		      sta	VBLANK
+     83  f05a
+     84  f05a							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     85  f05a							;; 242 (PAL) Visible scanlines
+     86  f05a							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     87  f05a		       a2 d6		      ldx	#214
+     88  f05c
+     89  f05c				   Scanline
+     90  f05c		       8a		      txa
+     91  f05d		       38		      SEC
+     92  f05e		       e5 81		      sbc	yPos
+     93  f060		       c5 82		      cmp	yHeight
+     94  f062		       90 02		      bcc	LoadPlayerBitmap
+     95  f064
+     96  f064		       a9 00		      lda	#0
+     97  f066
+     98  f066				   LoadPlayerBitmap
+     99  f066		       a8		      tay
+    100  f067		       b9 e7 f0 	      lda	pBitmap,Y	;A is our scanline, so iterate arr based on that
+    101  f06a		       85 02		      sta	WSYNC
+    102  f06c		       85 1b		      sta	GRP0	;Set p graphic address
+    103  f06e		       b9 07 f1 	      lda	pCol,Y	;Get col same as bitmap
+    104  f071		       85 06		      sta	COLUP0
+    105  f073		       ca		      dex
+    106  f074		       d0 e6		      bne	Scanline
+    107  f076
+    108  f076		       a9 02		      lda	#2
+    109  f078		       85 01		      sta	VBLANK
+    110  f07a		       a6 1f		      ldx	31
+    111  f07c
+    112  f07c				   Overscan
+    113  f07c		       ca		      dex
+    114  f07d		       85 02		      sta	WSYNC
+    115  f07f		       d0 fb		      bne	Overscan
+    116  f081
+    117  f081		       a9 00		      lda	#0
+    118  f083		       85 01		      sta	VBLANK
+    119  f085							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    120  f085							;; Joystick input test for P0 up/down/left/right
+    121  f085							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    122  f085							; CheckP0Up:
+    123  f085							;     lda #%00010000
+    124  f085							;     bit SWCHA
+    125  f085							;     bne CheckP0Down
+    126  f085							;     inc yPos
+    127  f085
+    128  f085							; CheckP0Down:
+    129  f085							;     lda #%00100000
+    130  f085							;     bit SWCHA
+    131  f085							;     bne CheckP0Left
+    132  f085							;     dec yPos
+    133  f085
+    134  f085				   CheckP0Left
+    135  f085		       a9 40		      lda	#%01000000
+    136  f087		       2c 80 02 	      bit	SWCHA
+    137  f08a		       d0 02		      bne	CheckP0Right
+    138  f08c		       c6 80		      dec	xPos
+    139  f08e
+    140  f08e				   CheckP0Right
+    141  f08e		       a9 80		      lda	#%10000000
+    142  f090		       2c 80 02 	      bit	SWCHA
+    143  f093		       d0 02		      bne	CheckFire
+    144  f095		       e6 80		      inc	xPos
+    145  f097
+    146  f097				   CheckFire
+    147  f097		       a9 02		      lda	#2
+    148  f099		       c5 84		      cmp	canJump
+    149  f09b		       d0 35		      bne	NoInput
+    150  f09d		       a9 80		      lda	#%10000000
+    151  f09f		       24 0c		      bit	INPT4
+    152  f0a1		       d0 2f		      bne	NoInput
+    153  f0a3		       4c a6 f0 	      jmp	JumpPlayer
+    154  f0a6
+    155  f0a6				   JumpPlayer
+    156  f0a6		       18		      clc
+    157  f0a7		       a5 83		      lda	maxHeight
+    158  f0a9		       c5 81		      cmp	yPos
+    159  f0ab		       90 25		      bcc	NoInput
+    160  f0ad					      REPEAT	15
+    161  f0ad		       e6 81		      inc	yPos
+    160  f0ad					      REPEND
+    161  f0af		       e6 81		      inc	yPos
+    160  f0af					      REPEND
+    161  f0b1		       e6 81		      inc	yPos
+    160  f0b1					      REPEND
+    161  f0b3		       e6 81		      inc	yPos
+    160  f0b3					      REPEND
+    161  f0b5		       e6 81		      inc	yPos
+    160  f0b5					      REPEND
+    161  f0b7		       e6 81		      inc	yPos
+    160  f0b7					      REPEND
+    161  f0b9		       e6 81		      inc	yPos
+    160  f0b9					      REPEND
+    161  f0bb		       e6 81		      inc	yPos
+    160  f0bb					      REPEND
+    161  f0bd		       e6 81		      inc	yPos
+    160  f0bd					      REPEND
+    161  f0bf		       e6 81		      inc	yPos
+    160  f0bf					      REPEND
+    161  f0c1		       e6 81		      inc	yPos
+    160  f0c1					      REPEND
+    161  f0c3		       e6 81		      inc	yPos
+    160  f0c3					      REPEND
+    161  f0c5		       e6 81		      inc	yPos
+    160  f0c5					      REPEND
+    161  f0c7		       e6 81		      inc	yPos
+    160  f0c7					      REPEND
+    161  f0c9		       e6 81		      inc	yPos
+    162  f0cb					      REPEND
+    163  f0cb		       a9 00		      lda	#0
+    164  f0cd		       85 84		      sta	canJump
+    165  f0cf		       4c e4 f0 	      jmp	NextFrame
+    166  f0d2				   NoInput
+    167  f0d2							; fallback when no input was performed
+    168  f0d2
+    169  f0d2		       a9 00		      lda	#0
+    170  f0d4				   Gravity
+    171  f0d4		       c5 81		      cmp	yPos
+    172  f0d6		       f0 05		      beq	ZeroPos
+    173  f0d8		       c6 81		      dec	yPos
+    174  f0da		       4c e4 f0 	      jmp	NextFrame
+    175  f0dd
+    176  f0dd				   ZeroPos
+    177  f0dd		       a9 02		      lda	#2
+    178  f0df		       85 84		      sta	canJump
+    179  f0e1		       4c e4 f0 	      jmp	NextFrame
+    180  f0e4				   NextFrame
+    181  f0e4		       4c 23 f0 	      jmp	StartFrame
+    182  f0e7
+    183  f0e7				   pBitmap
+    184  f0e7		       00		      byte.b	#%00000000
+    185  f0e8		       3e		      byte.b	#%00111110
+    186  f0e9		       36		      byte.b	#%00110110
+    187  f0ea		       36		      byte.b	#%00110110
+    188  f0eb		       2a		      byte.b	#%00101010
+    189  f0ec		       12		      byte.b	#%00010010
+    190  f0ed		       3f		      byte.b	#%00111111
+    191  f0ee
+    192  f0ee		       0c		      byte.b	#%00001100
+    193  f0ef		       0c		      byte.b	#%00001100
+    194  f0f0
+    195  f0f0		       0e		      byte.b	#%0001110
+    196  f0f1		       3e		      byte.b	#%00111110
+    197  f0f2
+    198  f0f2		       bd		      byte.b	#%10111101
+    199  f0f3		       bd		      byte.b	#%10111101
+    200  f0f4		       bd		      byte.b	#%10111101
+    201  f0f5		       bd		      byte.b	#%10111101
+    202  f0f6		       bd		      byte.b	#%10111101
+    203  f0f7		       bd		      byte.b	#%10111101
+    204  f0f8		       bd		      byte.b	#%10111101
+    205  f0f9		       bd		      byte.b	#%10111101
+    206  f0fa		       bd		      byte.b	#%10111101
+    207  f0fb		       bd		      byte.b	#%10111101
+    208  f0fc		       bd		      byte.b	#%10111101
+    209  f0fd
+    210  f0fd		       3c		      byte.b	#%00111100
+    211  f0fe		       24		      byte.b	#%00100100
+    212  f0ff		       24		      byte.b	#%00100100
+    213  f100		       24		      byte.b	#%00100100
+    214  f101		       24		      byte.b	#%00100100
+    215  f102		       24		      byte.b	#%00100100
+    216  f103		       24		      byte.b	#%00100100
+    217  f104		       24		      byte.b	#%00100100
+    218  f105		       24		      byte.b	#%00100100
+    219  f106
+    220  f106		       6c		      byte.b	#%01101100
+    221  f107							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    222  f107							;; Lookup table for the player colors
+    223  f107							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    224  f107				   pCol
+    225  f107		       00		      byte.b	#$00
+    226  f108		       00		      byte.b	#$00
+    227  f109		       40		      byte.b	#$40
+    228  f10a		       40		      byte.b	#$40
+    229  f10b		       40		      byte.b	#$40
+    230  f10c		       40		      byte.b	#$40
+    231  f10d		       42		      byte.b	#$42
+    232  f10e		       42		      byte.b	#$42
+    233  f10f		       44		      byte.b	#$44
+    234  f110		       d2		      byte.b	#$D2
+    235  f111		       d2		      byte.b	#$D2
+    236  f112		       00		      byte.b	#$00
+    237  f113		       40		      byte.b	#$40
+    238  f114		       40		      byte.b	#$40
+    239  f115		       40		      byte.b	#$40
+    240  f116		       40		      byte.b	#$40
+    241  f117		       42		      byte.b	#$42
+    242  f118		       42		      byte.b	#$42
+    243  f119		       44		      byte.b	#$44
+    244  f11a		       d2		      byte.b	#$D2
+    245  f11b		       d2		      byte.b	#$D2
+    246  f11c		       00		      byte.b	#$00
+    247  f11d		       40		      byte.b	#$40
+    248  f11e		       40		      byte.b	#$40
+    249  f11f		       40		      byte.b	#$40
+    250  f120		       40		      byte.b	#$40
+    251  f121		       42		      byte.b	#$42
+    252  f122		       42		      byte.b	#$42
+    253  f123		       44		      byte.b	#$44
+    254  f124		       d2		      byte.b	#$D2
+    255  f125		       d2		      byte.b	#$D2
+    256  f126		       d2		      byte.b	#$D2
+    257  f127							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    258  f127							;; Complete ROM size
+    259  f127							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    260  fffc					      org	$FFFC
+    261  fffc		       00 f0		      word.w	Reset
+    262  fffe		       00 f0		      word.w	Reset

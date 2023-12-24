@@ -8,6 +8,8 @@
 xPos byte
 yPos byte
 yHeight byte
+maxHeight byte
+canJump byte
 
 missileXPos byte
 
@@ -26,8 +28,14 @@ Reset:
     lda #10
     sta xPos  ;Init player start pos
 
-    lda #17     ;Elements in the array
+    lda #32     ;Elements in the array
     sta yHeight
+
+    lda #80
+    sta maxHeight
+
+    lda #2
+    sta canJump
 
 StartFrame:
     lda #2
@@ -76,7 +84,7 @@ VBlank:     ;Output remaining VBLANK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 242 (PAL) Visible scanlines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ldx 242
+    ldx #242
 
 Scanline:
     txa
@@ -111,17 +119,17 @@ Overscan:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Joystick input test for P0 up/down/left/right
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-CheckP0Up:
-    lda #%00010000
-    bit SWCHA
-    bne CheckP0Down
-    inc yPos
+; CheckP0Up:
+;     lda #%00010000
+;     bit SWCHA
+;     bne CheckP0Down
+;     inc yPos
 
-CheckP0Down:
-    lda #%00100000
-    bit SWCHA
-    bne CheckP0Left
-    dec yPos
+; CheckP0Down:
+;     lda #%00100000
+;     bit SWCHA
+;     bne CheckP0Left
+;     dec yPos
 
 CheckP0Left:
     lda #%01000000
@@ -132,86 +140,120 @@ CheckP0Left:
 CheckP0Right:
     lda #%10000000
     bit SWCHA
-    bne NoInput
+    bne CheckFire
     inc xPos
 
 CheckFire:
+    lda #2
+    cmp canJump
+    bne NoInput
     lda #%10000000
     bit INPT4
     bne NoInput
-    jmp SpawnMissile
-SpawnMissile:
-    lda #2
-    sta ENAM0
-    ldx xPos
-    stx missileXPos
+    jmp JumpPlayer
+
+JumpPlayer:
+    clc
+    lda maxHeight
+    cmp yPos
+    bcc NoInput
+    REPEAT 15
+        inc yPos
+    REPEND
+    lda #0
+    sta canJump
+    jmp NextFrame
 NoInput:
     ; fallback when no input was performed
 
+    lda #0
+Gravity:
+    cmp yPos
+    beq ZeroPos
+    dec yPos
+    jmp NextFrame
 
+ZeroPos:
+    lda #2
+    sta canJump
+    jmp NextFrame
+NextFrame:
     jmp StartFrame
 
 pBitmap:
     byte #%00000000
-    byte #%01111110
-    byte #%00010100
-    byte #%00010100
-    byte #%00010100
-    byte #%00010100
-    byte #%00011100
-    byte #%01011101
-    byte #%01011101
-    byte #%01011101
-    byte #%01011101
-    byte #%01111111
     byte #%00111110
-    byte #%00010000
-    byte #%00011100
-    byte #%00011100
-    byte #%00011100
+    byte #%00110110
+    byte #%00110110
+    byte #%00101010
+    byte #%00010010
+    byte #%00111111
 
+    byte #%00001100
+    byte #%00001100
+
+    byte #%0001110
+    byte #%00111110
+
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    byte #%10111101
+    
+    byte #%00111100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+    byte #%00100100
+
+    byte #%01101100
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lookup table for the player colors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 pCol:
     byte #$00
-    byte #$F6
-    byte #$F2
-    byte #$F2
-    byte #$F2
-    byte #$F2
-    byte #$F2
-    byte #$C2
-    byte #$C2
-    byte #$C2
-    byte #$C2
-    byte #$C2
-    byte #$C2
-    byte #$3E
-    byte #$3E
-    byte #$3E
-    byte #$24
-
-eBitmap
-    byte #%00000000
-    byte #%01111000
-    byte #%01111000
-    byte #%01111000
-    byte #%01111000
-    byte #%01111000
-    byte #%01111000
-    byte #%00110000
-
-eCol:
-    byte #$4C
-    byte #$4C
-    byte #$4C
-    byte #$4C
-    byte #$4C
-    byte #$4C
-    byte #$4C
     byte #$00
-
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$42
+    byte #$42
+    byte #$44
+    byte #$D2
+    byte #$D2
+     byte #$00
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$42
+    byte #$42
+    byte #$44
+    byte #$D2
+    byte #$D2
+     byte #$00
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$40
+    byte #$42
+    byte #$42
+    byte #$44
+    byte #$D2
+    byte #$D2
+    byte #$D2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Complete ROM size
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
